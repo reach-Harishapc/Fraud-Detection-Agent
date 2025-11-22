@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fraud Detection Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #f1f5f9;
+            margin-bottom: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        .result-section {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .risk-low {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .risk-medium {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .risk-high {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .risk-critical {
+            background: #7f1d1d;
+            color: #fff;
+        }
+
+        .factor-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .factor-list li {
+            padding: 8px;
+            margin: 4px 0;
+            background: #334155;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        #result {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🔒 Fraud Detection Monitor</h1>
+        <p>Real-time transaction monitoring with ML-powered fraud detection</p>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <input type="number" id="amount" placeholder="Amount ($)" value="150">
+            </div>
+            <div class="form-group">
+                <input type="text" id="merchant" placeholder="Merchant" value="Amazon">
+            </div>
+            <div class="form-group">
+                <input type="text" id="location" placeholder="Location" value="New York, NY">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="cardPresent" checked>
+                <label>Card Present</label>
+            </div>
+            <div class="form-group">
+                <input type="text" id="deviceId" placeholder="Device ID" value="DEVICE_1">
+            </div>
+            <div class="form-group">
+                <button class="btn" onclick="monitorTransaction()">Analyze Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result" class="result-section">
+        <h2 style="margin-bottom:15px;">Transaction Analysis</h2>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div>
+                <h3 style="color:#94a3b8; font-size:14px; margin-bottom:10px;">RISK ASSESSMENT</h3>
+                <div style="font-size:48px; font-weight:700; margin:10px 0;" id="riskScore">--</div>
+                <div id="riskBadge"></div>
+                <div style="margin-top:15px;" id="recommendation"></div>
+            </div>
+
+            <div>
+                <h3 style="color:#94a3b8; font-size:14px; margin-bottom:10px;">RISK FACTORS</h3>
+                <ul class="factor-list" id="riskFactors"></ul>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;" id="patterns"></div>
+    </div>
+
+    <script>
+        async function monitorTransaction() {
+            const data = {
+                amount: document.getElementById('amount').value,
+                merchant: document.getElementById('merchant').value,
+                location: document.getElementById('location').value,
+                card_present: document.getElementById('cardPresent').checked,
+                device_id: document.getElementById('deviceId').value
+            };
+
+            try {
+                const response = await fetch('/api/monitor_transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show result section
+                    document.getElementById('result').style.display = 'block';
+
+                    // Update risk score
+                    document.getElementById('riskScore').textContent = result.risk_score;
+
+                    // Update risk badge
+                    const badgeClass = 'risk-' + result.risk_level.toLowerCase();
+                    document.getElementById('riskBadge').innerHTML =
+                        `<span class="risk-badge ${badgeClass}">${result.risk_level} RISK</span>`;
+
+                    // Update recommendation
+                    document.getElementById('recommendation').innerHTML =
+                        `<strong>Recommendation:</strong> ${result.recommendation}`;
+
+                    // Update risk factors
+                    const factorsHtml = result.risk_factors.map(f => `<li>⚠️ ${f}</li>`).join('');
+                    document.getElementById('riskFactors').innerHTML = factorsHtml || '<li>No specific risk factors identified</li>';
+
+                    // Update patterns
+                    if (result.patterns && result.patterns.length > 0) {
+                        const patternsHtml = result.patterns.map(p =>
+                            `<div style="padding:10px; background:#7f1d1d; border-radius:4px; margin-bottom:8px;">
+                        <strong>🚨 ${p.pattern}</strong><br>
+                        <small>${p.description}</small>
+                    </div>`
+                        ).join('');
+                        document.getElementById('patterns').innerHTML =
+                            '<h3 style="color:#94a3b8; font-size:14px; margin-bottom:10px;">FRAUD PATTERNS DETECTED</h3>' + patternsHtml;
+                    } else {
+                        document.getElementById('patterns').innerHTML = '';
+                    }
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error analyzing transaction');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+
+</html>
