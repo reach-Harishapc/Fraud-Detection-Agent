@@ -1,6 +1,7 @@
 # Finance Fraud Detection Agent
 
 ## Problem Statement
+
 **Fraud Detection & Prevention**
 
 Financial institutions lose billions annually to fraudulent transactions. Traditional rule-based systems generate excessive false positives, frustrating legitimate customers while missing sophisticated fraud patterns. Real-time detection is critical but challenging.
